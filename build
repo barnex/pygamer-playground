@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# prereqs:
+#     rustup target add thumbv7em-none-eabihf
+#     rustup component add llvm-tools-preview
+#     cargo install uf2conv cargo-binutils
+
+set -e
+
+# cargo objcopy --example $1 --features unproven --release -- -O binary out.bin
+mv out.uf2 /tmp
+cargo build --example $1 --release
+cargo objcopy --example $1 --release -- -O binary out.bin
+uf2conv out.bin --base 0x4000 --output out.uf2
