@@ -8,7 +8,7 @@
 set -e
 
 # cargo objcopy --example $1 --features unproven --release -- -O binary out.bin
-mv out.uf2 /tmp
-cargo build --example $1 --release
-cargo objcopy --example $1 --release -- -O binary out.bin
+rm -f out.uf2
+cargo build --release
+cargo objcopy --release -- -O binary out.bin
 uf2conv out.bin --base 0x4000 --output out.uf2
