@@ -34,7 +34,6 @@ use embedded_graphics::text::Text;
 use st7735_lcd as lcd;
 use tinybmp::Bmp;
 
-
 #[entry]
 fn main() -> ! {
     let mut peripherals = Peripherals::take().unwrap();
@@ -79,15 +78,23 @@ fn main() -> ! {
 struct MyErr {}
 
 fn main_loop(display: &mut Display) -> Result<(), MyErr> {
+    let mut fb = FrameBuffer::new();
+    let text = Text::new(
+        "Hello Rust!\nNewline\nA looong line",
+        Point::new(0, 10),
+        text_stile(),
+    );
+
     loop {
-        clear(display);
-        Text::new(
-            "Hello Rust!\nNewline\nA looong line",
-            Point::new(0, 10),
-            text_stile(),
-        )
-        .draw(display)
-        .map_err(|_| MyErr {})?;
+        fb.clear(Rgb565::BLUE).unwrap();
+        text.draw(&mut fb).unwrap();
+        display.draw_iter(fb.iter_pixels()).unwrap();
+
+        fb.clear(Rgb565::BLACK).unwrap();
+        text.draw(&mut fb).unwrap();
+        display.draw_iter(fb.iter_pixels()).unwrap();
+
+        //fb.draw(display).map_err(|_| MyErr {})?;
     }
 
     //let raw_image: Bmp<Rgb565> = Bmp::from_slice(include_bytes!("../ferris.bmp")).unwrap();
