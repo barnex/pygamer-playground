@@ -9,4 +9,4 @@ pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
 embedded-graphics = "0.7.1"
 panic-halt = "0.2"
 tinybmp = "0.3.1"
-
+st7735-lcd = "0.8.1"

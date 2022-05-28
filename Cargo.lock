@@ -263,6 +263,7 @@ dependencies = [
  "embedded-graphics",
  "panic-halt",
  "pygamer",
+ "st7735-lcd",
  "tinybmp",
 ]
 

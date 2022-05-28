@@ -10,6 +10,13 @@
 
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
+
+use hal::clock::GenericClockController;
+use hal::gpio;
+use hal::sercom;
+use hal::sercom::SPIMaster4;
+use pac::SERCOM4;
+use pac::{CorePeripherals, Peripherals};
 use pygamer::{entry, hal, pac, Pins};
 
 use embedded_graphics::draw_target::DrawTarget;
@@ -20,12 +27,34 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyleBuilder, Rectangle};
 use embedded_graphics::text::Text;
-use hal::clock::GenericClockController;
-use pac::{CorePeripherals, Peripherals};
+
+use st7735_lcd as lcd;
 use tinybmp::Bmp;
 
 const SCREEN_W: i32 = 160;
 const SCREEN_H: i32 = 128;
+
+type Display = lcd::ST7735<
+    SPIMaster4<
+        sercom::Pad<
+            SERCOM4,
+            sercom::v2::Pad2,
+            pygamer::gpio::Pin<gpio::v2::PB14, pygamer::gpio::v2::Alternate<pygamer::gpio::v2::C>>,
+        >,
+        sercom::Pad<
+            SERCOM4,
+            sercom::v2::Pad3,
+            pygamer::gpio::Pin<gpio::v2::PB15, pygamer::gpio::v2::Alternate<pygamer::gpio::v2::C>>,
+        >,
+        sercom::Pad<
+            SERCOM4,
+            sercom::v2::Pad1,
+            pygamer::gpio::Pin<gpio::v2::PB13, pygamer::gpio::v2::Alternate<pygamer::gpio::v2::C>>,
+        >,
+    >,
+    pygamer::gpio::Pin<gpio::v2::PB05, pygamer::gpio::v2::Output<pygamer::gpio::v2::PushPull>>,
+    pygamer::gpio::Pin<gpio::v2::PA00, pygamer::gpio::v2::Output<pygamer::gpio::v2::PushPull>>,
+>;
 
 #[entry]
 fn main() -> ! {
@@ -70,7 +99,7 @@ fn main() -> ! {
 #[derive(Debug)]
 struct MyErr {}
 
-fn main_loop(display: &mut impl DrawTarget<Color = Rgb565>) -> Result<(), MyErr> {
+fn main_loop(display: &mut Display) -> Result<(), MyErr> {
     loop {
         clear(display);
         Text::new(
@@ -93,21 +122,15 @@ fn text_stile() -> MonoTextStyle<'static, Rgb565> {
     MonoTextStyle::new(&mono_font::ascii::FONT_6X10, Rgb565::WHITE)
 }
 
-fn clear(display: &mut impl DrawTarget<Color = Rgb565>) {
+fn clear(display: &mut Display) {
     unwrap(display.clear(Rgb565::BLACK))
-    //let bg = Rectangle::with_corners(Point::new(0, 0), Point::new(SCREEN_W, SCREEN_H)).into_styled(
-    //    PrimitiveStyleBuilder::new()
-    //        .fill_color(Rgb565::BLACK)
-    //        .build(),
-    //);
-    //bg.draw(display).map_err(|_| MyErr {})
 }
 
 fn unwrap<E>(r: Result<(), E>) {
     r.map_err(|_| MyErr {}).unwrap()
 }
 
-fn print(display: &mut impl DrawTarget<Color = Rgb565>, text: &str) {
+fn print(display: &mut Display, text: &str) {
     Text::new(text, Point::new(0, 10), text_stile())
         .draw(display)
         .map_err(|_| MyErr {})
