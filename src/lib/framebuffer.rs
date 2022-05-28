@@ -19,8 +19,18 @@ impl FrameBuffer {
         }
     }
 
-    pub fn iter_pixels(&self) -> impl Iterator<Item = Pixel<Rgb565>> {
-        todo!();
+    pub fn iter_pixels(&self) -> impl Iterator<Item = Pixel<Rgb565>> + '_{
+        self.inner.iter().enumerate().flat_map(|(y, row)| {
+            row.iter().enumerate().map(move |(x, v)| {
+                Pixel(
+                    Point {
+                        x: x as i32,
+                        y: y as i32,
+                    },
+                    *v,
+                )
+            })
+        })
     }
 }
 
