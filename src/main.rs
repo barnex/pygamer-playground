@@ -8,6 +8,9 @@
 #![no_std]
 #![no_main]
 
+mod lib;
+use lib::types::*;
+
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
@@ -33,28 +36,6 @@ use tinybmp::Bmp;
 
 const SCREEN_W: i32 = 160;
 const SCREEN_H: i32 = 128;
-
-type Display = lcd::ST7735<
-    SPIMaster4<
-        sercom::Pad<
-            SERCOM4,
-            sercom::v2::Pad2,
-            pygamer::gpio::Pin<gpio::v2::PB14, pygamer::gpio::v2::Alternate<pygamer::gpio::v2::C>>,
-        >,
-        sercom::Pad<
-            SERCOM4,
-            sercom::v2::Pad3,
-            pygamer::gpio::Pin<gpio::v2::PB15, pygamer::gpio::v2::Alternate<pygamer::gpio::v2::C>>,
-        >,
-        sercom::Pad<
-            SERCOM4,
-            sercom::v2::Pad1,
-            pygamer::gpio::Pin<gpio::v2::PB13, pygamer::gpio::v2::Alternate<pygamer::gpio::v2::C>>,
-        >,
-    >,
-    pygamer::gpio::Pin<gpio::v2::PB05, pygamer::gpio::v2::Output<pygamer::gpio::v2::PushPull>>,
-    pygamer::gpio::Pin<gpio::v2::PA00, pygamer::gpio::v2::Output<pygamer::gpio::v2::PushPull>>,
->;
 
 #[entry]
 fn main() -> ! {
@@ -103,7 +84,7 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
     loop {
         clear(display);
         Text::new(
-            "Hello Rust!\nNewline\nA veeeeeery long line",
+            "Hello Rust!\nNewline\nA looong line",
             Point::new(0, 10),
             text_stile(),
         )
