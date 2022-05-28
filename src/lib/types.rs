@@ -24,5 +24,5 @@ pub use embedded_graphics::text::Text;
 pub use st7735_lcd as lcd;
 pub use tinybmp::Bmp;
 
-
 pub use super::display::*;
+pub use super::framebuffer::*;

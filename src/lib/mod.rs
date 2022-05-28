@@ -1,5 +1,4 @@
 
 pub mod display;
 pub mod types;
-
-pub use display::*;
+pub mod framebuffer;

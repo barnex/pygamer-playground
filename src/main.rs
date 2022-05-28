@@ -34,8 +34,6 @@ use embedded_graphics::text::Text;
 use st7735_lcd as lcd;
 use tinybmp::Bmp;
 
-const SCREEN_W: i32 = 160;
-const SCREEN_H: i32 = 128;
 
 #[entry]
 fn main() -> ! {

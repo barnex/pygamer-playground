@@ -1,5 +1,11 @@
 use super::types::*;
 
+pub const SCREEN_W: usize = 160;
+pub const SCREEN_H: usize = 128;
+
+pub const ISCREEN_W: i32 = SCREEN_W as i32;
+pub const ISCREEN_H: i32 = SCREEN_H as i32;
+
 pub type Display = lcd::ST7735<
     SPIMaster4<
         sercom::Pad<
