@@ -91,16 +91,18 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
     loop {
         console.clear();
 
-        writeln!(&mut console, "frame {frame}").unwrap();
+        writeln!(&mut console, "{frame}").unwrap();
         let text = Text::new(&console, Point::new(0, 10), text_stile());
 
         fb.clear(Rgb565::BLUE).unwrap();
         text.draw(&mut fb).unwrap();
-        display.draw_iter(fb.iter_pixels()).unwrap();
+        //display.draw_iter(fb.iter_pixels()).unwrap();
+        upload(&fb, display)?;
 
         fb.clear(Rgb565::BLACK).unwrap();
         text.draw(&mut fb).unwrap();
-        display.draw_iter(fb.iter_pixels()).unwrap();
+        //display.draw_iter(fb.iter_pixels()).unwrap();
+        upload(&fb, display)?;
 
         frame += 2;
     }
@@ -110,6 +112,19 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
     //ferris.draw(&mut display).unwrap();
 
     Ok(())
+}
+
+fn upload(src: &FrameBuffer, dst: &mut Display) -> Result<(), MyErr> {
+    //dst.draw_iter(src.iter_pixels()).unwrap();
+    dst.set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
+        .map_err(my_err)?;
+    dst.write_pixels(src.inner.iter().flatten().map(|c| c.into_storage()))
+        .map_err(my_err)?;
+    Ok(())
+}
+
+fn my_err<E>(_e: E) -> MyErr {
+    MyErr {}
 }
 
 fn text_stile() -> MonoTextStyle<'static, Rgb565> {

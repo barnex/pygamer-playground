@@ -3,7 +3,7 @@ use super::types::*;
 use embedded_graphics as eg;
 
 pub struct FrameBuffer {
-    inner: [[Rgb565; SCREEN_W]; SCREEN_H],
+    pub inner: [[Rgb565; SCREEN_W]; SCREEN_H],
 }
 
 impl FrameBuffer {
