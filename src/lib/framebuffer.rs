@@ -19,7 +19,7 @@ impl FrameBuffer {
         }
     }
 
-    pub fn iter_pixels(&self) -> impl Iterator<Item = Pixel<Rgb565>> + '_{
+    pub fn iter_pixels(&self) -> impl Iterator<Item = Pixel<Rgb565>> + '_ {
         self.inner.iter().enumerate().flat_map(|(y, row)| {
             row.iter().enumerate().map(move |(x, v)| {
                 Pixel(
@@ -67,6 +67,13 @@ impl eg::draw_target::DrawTarget for FrameBuffer {
             self.set(point.x, point.y, color)
         }
 
+        Ok(())
+    }
+
+    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
+        for c in self.inner.iter_mut().flatten() {
+            *c = color
+        }
         Ok(())
     }
 }
