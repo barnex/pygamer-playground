@@ -31,6 +31,7 @@ use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyleBuilder, Rectangle};
 use embedded_graphics::text::Text;
 
+use core::fmt::Write;
 use st7735_lcd as lcd;
 use tinybmp::Bmp;
 
@@ -47,6 +48,8 @@ fn main() -> ! {
     );
     let mut pins = Pins::new(peripherals.PORT).split();
     let mut delay = hal::delay::Delay::new(core.SYST, &mut clocks);
+
+    //hal::timer::
 
     let (mut display, _backlight) = pins
         .display
@@ -79,13 +82,18 @@ struct MyErr {}
 
 fn main_loop(display: &mut Display) -> Result<(), MyErr> {
     let mut fb = FrameBuffer::new();
-    let text = Text::new(
-        "Hello Rust!\nNewline\nA looong line",
-        Point::new(0, 10),
-        text_stile(),
-    );
 
+    let mut console = heapless::String::<32>::new();
+
+    //use std::io::Write;
+
+    let mut frame = 0;
     loop {
+        console.clear();
+
+        writeln!(&mut console, "frame {frame}").unwrap();
+        let text = Text::new(&console, Point::new(0, 10), text_stile());
+
         fb.clear(Rgb565::BLUE).unwrap();
         text.draw(&mut fb).unwrap();
         display.draw_iter(fb.iter_pixels()).unwrap();
@@ -94,7 +102,7 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
         text.draw(&mut fb).unwrap();
         display.draw_iter(fb.iter_pixels()).unwrap();
 
-        //fb.draw(display).map_err(|_| MyErr {})?;
+        frame += 2;
     }
 
     //let raw_image: Bmp<Rgb565> = Bmp::from_slice(include_bytes!("../ferris.bmp")).unwrap();
