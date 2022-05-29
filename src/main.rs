@@ -37,7 +37,7 @@ use pygamer::pwm;
 use pygamer::sercom::PadPin;
 
 use core::fmt::Write;
-use st7735_lcd as lcd;
+//use st7735_lcd as lcd;
 use tinybmp::Bmp;
 
 fn init_display(
@@ -82,9 +82,9 @@ fn init_display(
     );
     pwm2.set_duty(pwm2.get_max_duty());
 
-    let mut display = st7735_lcd::ST7735::new(tft_spi, tft_dc, tft_reset, true, false, 160, 128);
+    let mut display = st7735::ST7735::new(tft_spi, tft_dc, tft_reset, true, false, 160, 128);
     display.init(delay)?;
-    display.set_orientation(&lcd::Orientation::LandscapeSwapped)?;
+    display.set_orientation(&st7735::Orientation::LandscapeSwapped)?;
 
     Ok(display)
 }
@@ -102,18 +102,6 @@ fn main() -> ! {
     );
     let mut pins = Pins::new(peripherals.PORT).split();
     let mut delay = hal::delay::Delay::new(core.SYST, &mut clocks);
-
-    //let (mut display, _backlight) = pins
-    //    .display
-    //    .init(
-    //        &mut clocks,
-    //        peripherals.SERCOM4,
-    //        &mut peripherals.MCLK,
-    //        peripherals.TC2,
-    //        &mut delay,
-    //        &mut pins.port,
-    //    )
-    //    .unwrap();
 
     let mut display = init_display(
         pins.display,
@@ -150,22 +138,17 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
 
     let mut console = heapless::String::<32>::new();
 
-    //use std::io::Write;
-
     let mut frame = 0;
     loop {
         console.clear();
 
         writeln!(&mut console, "{frame}").unwrap();
-        let text = Text::new(&console, Point::new(0, 10), text_stile());
+        let text = Text::new(&console, Point::new(0, 10), text_style());
 
         fb.clear(Rgb565::BLUE).unwrap();
         text.draw(&mut fb).unwrap();
-        //display.draw_iter(fb.iter_pixels()).unwrap();
-        upload(&fb, display)?;
 
-        //text.draw(&mut fb).unwrap();
-        //display.draw_iter(fb.iter_pixels()).unwrap();
+        upload(&fb, display)?;
         upload(&fb2, display)?;
         upload(&fb, display)?;
         upload(&fb2, display)?;
@@ -183,9 +166,10 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
 fn upload(src: &FrameBuffer, dst: &mut Display) -> Result<(), MyErr> {
     //dst.draw_iter(src.iter_pixels()).unwrap();
     //let N = SCREEN_H * SCREEN_W / 2;
+
     dst.set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
         .map_err(my_err)?;
-    dst.write_pixels(src.inner.iter().flatten().map(|c| c.into_storage()))
+    dst.write_pixels(src.inner.iter().map(|c| c.into_storage()))
         .map_err(my_err)?;
     Ok(())
 }
@@ -194,7 +178,7 @@ fn my_err<E>(_e: E) -> MyErr {
     MyErr {}
 }
 
-fn text_stile() -> MonoTextStyle<'static, Rgb565> {
+fn text_style() -> MonoTextStyle<'static, Rgb565> {
     MonoTextStyle::new(&mono_font::ascii::FONT_6X10, Rgb565::WHITE)
 }
 
@@ -207,7 +191,7 @@ fn unwrap<E>(r: Result<(), E>) {
 }
 
 fn print(display: &mut Display, text: &str) {
-    Text::new(text, Point::new(0, 10), text_stile())
+    Text::new(text, Point::new(0, 10), text_style())
         .draw(display)
         .map_err(|_| MyErr {})
         .unwrap();

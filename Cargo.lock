@@ -346,11 +346,12 @@ dependencies = [
 name = "pygamer-playground"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "embedded-graphics",
+ "embedded-hal",
  "heapless",
  "panic-halt",
  "pygamer",
- "st7735-lcd",
  "tinybmp",
 ]
 

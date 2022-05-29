@@ -3,7 +3,7 @@ use super::types::*;
 use embedded_graphics as eg;
 
 pub struct FrameBuffer {
-    pub inner: [[Rgb565; SCREEN_W]; SCREEN_H],
+    pub inner: [Rgb565; SCREEN_W * SCREEN_H],
 }
 
 impl FrameBuffer {
@@ -15,29 +15,29 @@ impl FrameBuffer {
         if x >= 0 && x < ISCREEN_W && y >= 0 && y < ISCREEN_H {
             let x = x as usize;
             let y = y as usize;
-            self.inner[y][x] = col;
+            self.inner[y * SCREEN_W + x] = col;
         }
     }
 
-    pub fn iter_pixels(&self) -> impl Iterator<Item = Pixel<Rgb565>> + '_ {
-        self.inner.iter().enumerate().flat_map(|(y, row)| {
-            row.iter().enumerate().map(move |(x, v)| {
-                Pixel(
-                    Point {
-                        x: x as i32,
-                        y: y as i32,
-                    },
-                    *v,
-                )
-            })
-        })
-    }
+    //pub fn iter_pixels(&self) -> impl Iterator<Item = Pixel<Rgb565>> + '_ {
+    //    self.inner.iter().enumerate().flat_map(|(y, row)| {
+    //        row.iter().enumerate().map(move |(x, v)| {
+    //            Pixel(
+    //                Point {
+    //                    x: x as i32,
+    //                    y: y as i32,
+    //                },
+    //                *v,
+    //            )
+    //        })
+    //    })
+    //}
 }
 
 impl Default for FrameBuffer {
     fn default() -> Self {
         Self {
-            inner: [[Default::default(); SCREEN_W]; SCREEN_H],
+            inner: [Default::default(); SCREEN_W * SCREEN_H],
         }
     }
 }
@@ -71,7 +71,7 @@ impl eg::draw_target::DrawTarget for FrameBuffer {
     }
 
     fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-        for c in self.inner.iter_mut().flatten() {
+        for c in self.inner.iter_mut() {
             *c = color
         }
         Ok(())

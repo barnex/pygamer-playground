@@ -21,8 +21,8 @@ pub use embedded_graphics::prelude::*;
 pub use embedded_graphics::primitives::{PrimitiveStyleBuilder, Rectangle};
 pub use embedded_graphics::text::Text;
 
-pub use st7735_lcd as lcd;
 pub use tinybmp::Bmp;
 
 pub use super::display::*;
 pub use super::framebuffer::*;
+pub use super::st7735;

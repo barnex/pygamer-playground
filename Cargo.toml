@@ -7,7 +7,11 @@ edition = "2021"
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
 embedded-graphics = "0.7.1"
+embedded-hal = "0.2"
 panic-halt = "0.2"
 tinybmp = "0.3.1"
-st7735-lcd = "0.8.1"
 heapless = "0.7"
+bytemuck = "*"
+
+[profile.release]
+lto = "fat"
