@@ -52,7 +52,7 @@ fn init_display(
     let gclk0 = clocks.gclk0();
     let tft_spi = pygamer::sercom::SPIMaster4::new(
         &clocks.sercom4_core(&gclk0).ok_or(())?,
-        16_u32.mhz(),
+        32.mhz(),
         spi::Mode {
             phase: spi::Phase::CaptureOnFirstTransition,
             polarity: spi::Polarity::IdleLow,
@@ -71,7 +71,6 @@ fn init_display(
 
     let tft_dc = display.tft_dc.into_push_pull_output(port);
     let tft_reset = display.tft_reset.into_push_pull_output(port);
-
 
     let tft_backlight = display.tft_backlight.into_function_e(port);
     let mut pwm2 = pwm::Pwm2::new(
@@ -183,10 +182,10 @@ fn main_loop(display: &mut Display) -> Result<(), MyErr> {
 
 fn upload(src: &FrameBuffer, dst: &mut Display) -> Result<(), MyErr> {
     //dst.draw_iter(src.iter_pixels()).unwrap();
-    let N = SCREEN_H * SCREEN_W / 2;
-    dst.set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16 / 2)
+    //let N = SCREEN_H * SCREEN_W / 2;
+    dst.set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
         .map_err(my_err)?;
-    dst.write_pixels(src.inner.iter().flatten().take(N).map(|c| c.into_storage()))
+    dst.write_pixels(src.inner.iter().flatten().map(|c| c.into_storage()))
         .map_err(my_err)?;
     Ok(())
 }
