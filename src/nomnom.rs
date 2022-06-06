@@ -4,7 +4,6 @@
 mod lib;
 use lib::display::*;
 use lib::framebuffer::*;
-//use lib::types::*;
 
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
@@ -12,11 +11,10 @@ use panic_halt as _;
 use core::fmt::Write;
 
 use pac::gclk::pchctrl::GEN_A::GCLK11;
-use pac::SERCOM4;
-use pac::{CorePeripherals, Peripherals};
 
 use hal::adc::Adc;
 use hal::clock::GenericClockController;
+use hal::delay::Delay;
 use hal::gpio;
 use hal::hal::spi;
 use hal::sercom;
@@ -51,8 +49,10 @@ use tinybmp::Bmp;
 
 #[entry]
 fn main() -> ! {
-    let mut peripherals = Peripherals::take().unwrap();
-    let core = CorePeripherals::take().unwrap();
+    let mut peripherals = pac::Peripherals::take().unwrap();
+    let mut pins = Pins::new(peripherals.PORT).split();
+
+    let core = pac::CorePeripherals::take().unwrap();
     let mut clocks = GenericClockController::with_internal_32kosc(
         peripherals.GCLK,
         &mut peripherals.MCLK,
@@ -60,10 +60,7 @@ fn main() -> ! {
         &mut peripherals.OSCCTRL,
         &mut peripherals.NVMCTRL,
     );
-    let mut pins = Pins::new(peripherals.PORT);
-    let mut pins = pins.split();
-
-    let mut delay = hal::delay::Delay::new(core.SYST, &mut clocks);
+    let mut delay = Delay::new(core.SYST, &mut clocks);
 
     let (mut display, _backlight) = pins
         .display
@@ -77,23 +74,7 @@ fn main() -> ! {
         )
         .unwrap();
 
-    //let mut display = init_display(
-    //    pins.display,
-    //    &mut clocks,
-    //    peripherals.SERCOM4,
-    //    &mut peripherals.MCLK,
-    //    peripherals.TC2,
-    //    &mut delay,
-    //    &mut pins.port,
-    //)
-    //.unwrap();
-
-    //let mut pins = Pins::new(peripherals.PORT).split();
-    //let mut adc1 = hal::adc::Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
     let mut joystick = pins.joystick.init(&mut pins.port);
-
-    let mut fb = FrameBuffer::new();
-    let mut console = heapless::String::<256>::new();
 
     let mut buttons = pins.buttons.init(&mut pins.port);
 
@@ -112,6 +93,8 @@ fn main() -> ! {
     let mut adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
     let mut light = pins.light_pin.into_function_b(&mut pins.port);
 
+    let mut fb = FrameBuffer::new();
+    let mut console = heapless::String::<256>::new();
     let mut frame = 0;
     loop {
         console.clear();
@@ -136,10 +119,15 @@ fn main() -> ! {
 
         let text = Text::new(&console, Point::new(1, 9), text_style());
 
-        fb.clear(Rgb565::BLACK).unwrap();
+        fb.clear(Rgb565::WHITE).unwrap();
         text.draw(&mut fb).unwrap();
 
         //upload(&fb, &mut display).unwrap();
+
+        let raw_image: Bmp<Rgb565> =
+            Bmp::from_slice(include_bytes!("../assets/nomnom64.bmp")).unwrap();
+        let nomnom = Image::new(&raw_image, Point::new(80, 60));
+        nomnom.draw(&mut fb).unwrap();
 
         display
             .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
@@ -196,7 +184,7 @@ fn my_err<E>(_e: E) -> MyErr {
 }
 
 fn text_style() -> MonoTextStyle<'static, Rgb565> {
-    MonoTextStyle::new(&mono_font::ascii::FONT_7X13_BOLD, Rgb565::WHITE)
+    MonoTextStyle::new(&mono_font::ascii::FONT_7X13_BOLD, Rgb565::BLUE)
 }
 
 //fn clear(display: &mut Display) {
