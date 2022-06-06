@@ -16,6 +16,14 @@ path = "src/blinky_basic.rs"
 name = "neopixel_adc_light"
 path = "src/neopixel_adc_light.rs"
 
+[[bin]]
+name = "neopixel_button"
+path = "src/neopixel_button.rs"
+
+[[bin]]
+name = "neopixel_tilt"
+path = "src/neopixel_tilt.rs"
+
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
 bytemuck = "*"
@@ -26,6 +34,7 @@ panic-halt = "0.2"
 smart-leds = "0.3"
 tinybmp = "0.3.1"
 ws2812-timer-delay = "0.3"
+lis3dh = "0.4"
 
 [profile.release]
 lto = "fat"
