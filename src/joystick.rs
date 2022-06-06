@@ -161,7 +161,6 @@ fn main() -> ! {
         writeln!(&mut console, "gy {y:+0.3}").unwrap();
         writeln!(&mut console, "gz {z:+0.3}").unwrap();
 
-
         let light_data: u16 = adc1.read(&mut light).unwrap();
         writeln!(&mut console, "light {}", light_data).unwrap();
 
@@ -169,7 +168,7 @@ fn main() -> ! {
             writeln!(&mut console, "{:?}", event).unwrap();
         }
 
-        let text = Text::new(&console, Point::new(0, 10), text_style());
+        let text = Text::new(&console, Point::new(1, 9), text_style());
 
         fb.clear(Rgb565::BLACK).unwrap();
         text.draw(&mut fb).unwrap();
@@ -222,7 +221,7 @@ fn my_err<E>(_e: E) -> MyErr {
 }
 
 fn text_style() -> MonoTextStyle<'static, Rgb565> {
-    MonoTextStyle::new(&mono_font::ascii::FONT_6X10, Rgb565::WHITE)
+    MonoTextStyle::new(&mono_font::ascii::FONT_7X13_BOLD, Rgb565::WHITE)
 }
 
 fn clear(display: &mut Display) {
