@@ -21,6 +21,7 @@ use hal::sercom;
 use hal::sercom::SPIMaster4;
 use pac::SERCOM4;
 use pac::{CorePeripherals, Peripherals};
+use pygamer::buttons::Keys;
 use pygamer::{entry, hal, pac, Pins};
 
 use embedded_graphics::draw_target::DrawTarget;
@@ -116,7 +117,6 @@ fn main() -> ! {
     .unwrap();
 
     //let mut pins = Pins::new(peripherals.PORT).split();
-    let mut buttons = pins.buttons.init(&mut pins.port);
     let mut adc1 =
         hal::adc::Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
     let mut joystick = pins.joystick.init(&mut pins.port);
@@ -124,20 +124,28 @@ fn main() -> ! {
     let mut fb = FrameBuffer::new();
     let mut console = heapless::String::<256>::new();
 
+    let mut buttons = pins.buttons.init(&mut pins.port);
+
     let mut frame = 0;
     loop {
         console.clear();
 
-        let (x, y) = joystick.read(&mut adc1);
+        frame += 1;
+        writeln!(&mut console, "Frame: {frame}").unwrap();
 
-        writeln!(&mut console, "Frame: {frame}\nJoystick: {x} {y}\n").unwrap();
+        let (x, y) = joystick.read(&mut adc1);
+        writeln!(&mut console, "Joystick: {x} {y}").unwrap();
+
+        for event in buttons.events() {
+            writeln!(&mut console, "{:?}", event).unwrap();
+        }
+
         let text = Text::new(&console, Point::new(0, 10), text_style());
 
         fb.clear(Rgb565::BLACK).unwrap();
         text.draw(&mut fb).unwrap();
 
         upload(&fb, &mut display).unwrap();
-        frame += 1;
     }
 }
 
