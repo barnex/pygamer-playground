@@ -11,6 +11,7 @@
 mod lib;
 use lib::types::*;
 
+use lis3dh::accelerometer::vector::F32x3;
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
@@ -19,6 +20,7 @@ use hal::gpio;
 use hal::hal::spi;
 use hal::sercom;
 use hal::sercom::SPIMaster4;
+use hal::time::KiloHertz;
 use pac::SERCOM4;
 use pac::{CorePeripherals, Peripherals};
 use pygamer::buttons::Keys;
@@ -32,6 +34,7 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use embedded_graphics::primitives::{PrimitiveStyleBuilder, Rectangle};
 use embedded_graphics::text::Text;
+use lis3dh::{accelerometer::Accelerometer, Lis3dh};
 use pac::gclk::pchctrl::GEN_A::GCLK11;
 use pygamer::gpio::Port;
 use pygamer::prelude::*;
@@ -126,6 +129,18 @@ fn main() -> ! {
 
     let mut buttons = pins.buttons.init(&mut pins.port);
 
+    let i2c = pins.i2c.init(
+        &mut clocks,
+        KiloHertz(400),
+        peripherals.SERCOM2,
+        &mut peripherals.MCLK,
+        &mut pins.port,
+    );
+
+    let mut lis3dh = Lis3dh::new_i2c(i2c, lis3dh::SlaveAddr::Alternate).unwrap();
+    lis3dh.set_range(lis3dh::Range::G2).unwrap();
+    lis3dh.set_datarate(lis3dh::DataRate::Hz_100).unwrap();
+
     let mut frame = 0;
     loop {
         console.clear();
@@ -135,6 +150,11 @@ fn main() -> ! {
 
         let (x, y) = joystick.read(&mut adc1);
         writeln!(&mut console, "Joystick: {x} {y}").unwrap();
+
+        let F32x3 { x, y, z } = lis3dh.accel_norm().unwrap();
+        writeln!(&mut console, "gx {x:+0.3}").unwrap();
+        writeln!(&mut console, "gy {y:+0.3}").unwrap();
+        writeln!(&mut console, "gz {z:+0.3}").unwrap();
 
         for event in buttons.events() {
             writeln!(&mut console, "{:?}", event).unwrap();
