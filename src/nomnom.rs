@@ -94,50 +94,149 @@ fn main() -> ! {
     let mut light = pins.light_pin.into_function_b(&mut pins.port);
 
     let mut fb = FrameBuffer::new();
+
+    struct HW {
+        pub delay: Delay,
+        pub display: Display,
+    }
+
+    let mut hw = HW { delay, display };
+
     let mut console = heapless::String::<256>::new();
     let mut frame = 0;
+
+    let raw_image: Bmp<Rgb565> = Bmp::from_slice(include_bytes!("../assets/nomnom64.bmp")).unwrap();
+
+    let mut pos = (0.0f32, 0.0f32);
+    let mut vel = (0.0f32, 0.0f32);
+    const SIZE: i16 = 64;
+    const W: i16 = SCREEN_W as i16;
+    const H: i16 = SCREEN_H as i16;
+
+    let mut dbg = false;
+
+    fb.clear(Rgb565::WHITE).unwrap();
+
+    fb.clear(Rgb565::WHITE).unwrap();
+    let text = Text::new("Hello...", Point::new(30, 60), text_style());
+    text.draw(&mut fb).unwrap();
+    upload(&fb, &mut hw.display);
+
+    'wait: loop {
+        for event in buttons.events() {
+            match event {
+                Keys::ADown | Keys::BDown => break 'wait,
+                _ => (),
+            }
+        }
+    }
+
+    fb.clear(Rgb565::WHITE).unwrap();
+    let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
+    text.draw(&mut fb).unwrap();
+    upload(&fb, &mut hw.display);
+
+    hw.delay.delay_ms(500u16);
+
+    'wait2: loop {
+        for event in buttons.events() {
+            match event {
+                Keys::ADown | Keys::BDown => break 'wait2,
+                _ => (),
+            }
+        }
+    }
+
     loop {
-        console.clear();
-
-        frame += 1;
-        writeln!(&mut console, "Frame: {frame}").unwrap();
-
-        let (x, y) = joystick.read(&mut adc1);
-        writeln!(&mut console, "Joystick: {x} {y}").unwrap();
-
-        let F32x3 { x, y, z } = lis3dh.accel_norm().unwrap();
-        writeln!(&mut console, "gx {x:+0.3}").unwrap();
-        writeln!(&mut console, "gy {y:+0.3}").unwrap();
-        writeln!(&mut console, "gz {z:+0.3}").unwrap();
-
-        let light_data: u16 = adc1.read(&mut light).unwrap();
-        writeln!(&mut console, "light {}", light_data).unwrap();
+        fb.clear(Rgb565::WHITE).unwrap();
 
         for event in buttons.events() {
-            writeln!(&mut console, "{:?}", event).unwrap();
+            match event {
+                Keys::SelectDown => dbg = !dbg,
+                _ => (),
+            }
         }
 
-        let text = Text::new(&console, Point::new(1, 9), text_style());
+        let F32x3 {
+            x: gx,
+            y: gy,
+            z: gz,
+        } = lis3dh.accel_norm().unwrap();
 
-        fb.clear(Rgb565::WHITE).unwrap();
-        text.draw(&mut fb).unwrap();
+        const ACC: f32 = 0.08;
+        vel.0 += ACC * gx;
+        vel.1 += ACC * gy;
 
-        //upload(&fb, &mut display).unwrap();
+        pos.0 += vel.0;
+        pos.1 += vel.1;
 
-        let raw_image: Bmp<Rgb565> =
-            Bmp::from_slice(include_bytes!("../assets/nomnom64.bmp")).unwrap();
-        let nomnom = Image::new(&raw_image, Point::new(80, 60));
+        let ipos = (pos.0 as i16, pos.1 as i16);
+
+        if ipos.0 < 0 {
+            pos.0 = 0.0;
+            vel.0 = -vel.0 / 2.0;
+        }
+
+        if ipos.1 < 0 {
+            pos.1 = 0.0;
+            vel.1 = -vel.1 / 2.0;
+        }
+
+        if ipos.0 >= (W - SIZE) {
+            pos.0 = (W - SIZE - 1) as f32;
+            vel.0 = -vel.0 / 2.0;
+        }
+
+        if ipos.1 >= (H - SIZE) {
+            pos.1 = (H - SIZE - 1) as f32;
+            vel.1 = -vel.1 / 2.0;
+        }
+
+        let nomnom = Image::new(&raw_image, Point::new(pos.0 as i32, pos.1 as i32));
         nomnom.draw(&mut fb).unwrap();
 
-        display
-            .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
-            .map_err(my_err)
-            .unwrap();
-        display
-            .write_pixels(fb.inner.iter().map(|c| c.into_storage()))
-            .map_err(my_err)
-            .unwrap();
+        if dbg {
+            console.clear();
+            frame += 1;
+
+            writeln!(&mut console, "Frame: {frame}").unwrap();
+
+            let (x, y) = joystick.read(&mut adc1);
+            writeln!(&mut console, "Joystick: {x} {y}").unwrap();
+
+            writeln!(&mut console, "gx {gx:+0.3}").unwrap();
+            writeln!(&mut console, "gy {gy:+0.3}").unwrap();
+            writeln!(&mut console, "gz {gz:+0.3}").unwrap();
+
+            let light_data: u16 = adc1.read(&mut light).unwrap();
+            writeln!(&mut console, "light {}", light_data).unwrap();
+
+            let text = Text::new(&console, Point::new(1, 9), text_style());
+            text.draw(&mut fb).unwrap();
+        }
+
+        upload(&fb, &mut hw.display);
+
+        //display
+        //    .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
+        //    .map_err(my_err)
+        //    .unwrap();
+        //display
+        //    .write_pixels(fb.inner.iter().map(|c| c.into_storage()))
+        //    .map_err(my_err)
+        //    .unwrap();
     }
+}
+
+fn upload(fb: &FrameBuffer, display: &mut Display) {
+    display
+        .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
+        .map_err(my_err)
+        .unwrap();
+    display
+        .write_pixels(fb.inner.iter().map(|c| c.into_storage()))
+        .map_err(my_err)
+        .unwrap();
 }
 
 #[derive(Debug)]
