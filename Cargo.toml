@@ -9,6 +9,10 @@ name = "fastlcd"
 path = "src/fastlcd.rs"
 
 [[bin]]
+name = "joystick"
+path = "src/joystick.rs"
+
+[[bin]]
 name = "blinky_basic"
 path = "src/blinky_basic.rs"
 
