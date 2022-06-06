@@ -2,10 +2,12 @@
 #![no_main]
 
 mod lib;
-use bsp::buttons::ButtonReader;
-use bsp::pins::JoystickReader;
+use lib::accellerometer::*;
 use lib::display::*;
 use lib::framebuffer::*;
+
+use bsp::buttons::ButtonReader;
+use bsp::pins::JoystickReader;
 
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
@@ -26,6 +28,9 @@ use hal::time::KiloHertz;
 use pygamer as bsp;
 
 use bsp::buttons::Keys;
+use bsp::gpio::v2::Alternate;
+use bsp::gpio::v2::B;
+use bsp::gpio::v2::PB04;
 use bsp::gpio::Port;
 use bsp::prelude::*;
 use bsp::pwm;
@@ -48,27 +53,6 @@ use eg::primitives::Rectangle;
 use eg::text::Text;
 
 use tinybmp::Bmp;
-
-use lis3dh::*;
-use pac::SERCOM2;
-use pygamer::gpio::v2::Alternate;
-use pygamer::gpio::v2::B;
-use pygamer::gpio::v2::C;
-use pygamer::gpio::v2::PA12;
-use pygamer::gpio::v2::PA13;
-use pygamer::gpio::v2::PB04;
-use pygamer::sercom::v1::Pad;
-use pygamer::sercom::v2::Pad0;
-use pygamer::sercom::v2::Pad1;
-use pygamer::sercom::I2CMaster2;
-type AccMtr = Lis3dh<
-    Lis3dhI2C<
-        I2CMaster2<
-            Pad<SERCOM2, Pad0, gpio::Pin<PA12, Alternate<C>>>,
-            Pad<SERCOM2, Pad1, gpio::Pin<PA13, Alternate<C>>>,
-        >,
-    >,
->;
 
 // Hardware state
 struct HW {
@@ -108,9 +92,9 @@ fn main() -> ! {
         )
         .unwrap();
 
-    let mut joystick = pins.joystick.init(&mut pins.port);
+    let joystick = pins.joystick.init(&mut pins.port);
 
-    let mut buttons = pins.buttons.init(&mut pins.port);
+    let buttons = pins.buttons.init(&mut pins.port);
 
     let i2c = pins.i2c.init(
         &mut clocks,
@@ -124,8 +108,8 @@ fn main() -> ! {
     lis3dh.set_range(lis3dh::Range::G2).unwrap();
     lis3dh.set_datarate(lis3dh::DataRate::Hz_100).unwrap();
 
-    let mut adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
-    let mut light = pins.light_pin.into_function_b(&mut pins.port);
+    let adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
+    let light = pins.light_pin.into_function_b(&mut pins.port);
 
     let mut hw = HW {
         delay,
