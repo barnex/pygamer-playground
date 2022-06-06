@@ -6,7 +6,9 @@ pub const SCREEN_H: usize = 128;
 pub const ISCREEN_W: i32 = SCREEN_W as i32;
 pub const ISCREEN_H: i32 = SCREEN_H as i32;
 
-pub type Display = st7735::ST7735<
+use st7735_lcd;
+
+pub type Display = st7735_lcd::ST7735<
     SPIMaster4<
         sercom::Pad<
             SERCOM4,

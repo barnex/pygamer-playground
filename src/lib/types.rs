@@ -25,4 +25,3 @@ pub use tinybmp::Bmp;
 
 pub use super::display::*;
 pub use super::framebuffer::*;
-pub use super::st7735;

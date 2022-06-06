@@ -407,6 +407,7 @@ dependencies = [
  "panic-halt",
  "pygamer",
  "smart-leds",
+ "st7735-lcd",
  "tinybmp",
  "ws2812-timer-delay",
 ]

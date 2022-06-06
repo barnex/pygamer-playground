@@ -8,30 +8,6 @@ edition = "2021"
 name = "nomnom"
 path = "src/nomnom.rs"
 
-[[bin]]
-name = "fastlcd"
-path = "src/fastlcd.rs"
-
-[[bin]]
-name = "joystick"
-path = "src/joystick.rs"
-
-[[bin]]
-name = "blinky_basic"
-path = "src/blinky_basic.rs"
-
-[[bin]]
-name = "neopixel_adc_light"
-path = "src/neopixel_adc_light.rs"
-
-[[bin]]
-name = "neopixel_button"
-path = "src/neopixel_button.rs"
-
-[[bin]]
-name = "neopixel_tilt"
-path = "src/neopixel_tilt.rs"
-
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
 bytemuck = "*"
@@ -43,6 +19,7 @@ smart-leds = "0.3"
 tinybmp = "0.3.1"
 ws2812-timer-delay = "0.3"
 lis3dh = "0.4"
+st7735-lcd = "0.8"
 
 [profile.release]
 lto = "fat"
