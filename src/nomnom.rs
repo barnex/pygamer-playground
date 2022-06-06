@@ -20,9 +20,6 @@ use hal::adc::Adc;
 use hal::clock::GenericClockController;
 use hal::delay::Delay;
 use hal::gpio;
-use hal::hal::spi;
-use hal::sercom;
-use hal::sercom::SPIMaster4;
 use hal::time::KiloHertz;
 
 use pygamer as bsp;
@@ -31,10 +28,7 @@ use bsp::buttons::Keys;
 use bsp::gpio::v2::Alternate;
 use bsp::gpio::v2::B;
 use bsp::gpio::v2::PB04;
-use bsp::gpio::Port;
 use bsp::prelude::*;
-use bsp::pwm;
-use bsp::sercom::PadPin;
 use bsp::{entry, hal, pac, Pins};
 
 use lis3dh::accelerometer::vector::F32x3;
@@ -48,8 +42,6 @@ use eg::image::Image;
 use eg::mono_font;
 use eg::mono_font::MonoTextStyle;
 use eg::pixelcolor::Rgb565;
-use eg::primitives::PrimitiveStyleBuilder;
-use eg::primitives::Rectangle;
 use eg::text::Text;
 
 use tinybmp::Bmp;
@@ -63,65 +55,73 @@ struct HW {
     pub lis3dh: AccMtr,
     pub adc1: Adc<pac::ADC1>,
     pub light: gpio::Pin<PB04, Alternate<B>>,
+    pub fb: FrameBuffer,
+}
+
+impl HW {
+    pub fn new() -> Self {
+        let mut peripherals = pac::Peripherals::take().unwrap();
+        let mut pins = Pins::new(peripherals.PORT).split();
+
+        let core = pac::CorePeripherals::take().unwrap();
+        let mut clocks = GenericClockController::with_internal_32kosc(
+            peripherals.GCLK,
+            &mut peripherals.MCLK,
+            &mut peripherals.OSC32KCTRL,
+            &mut peripherals.OSCCTRL,
+            &mut peripherals.NVMCTRL,
+        );
+        let mut delay = Delay::new(core.SYST, &mut clocks);
+
+        let (display, _backlight) = pins
+            .display
+            .init(
+                &mut clocks,
+                peripherals.SERCOM4,
+                &mut peripherals.MCLK,
+                peripherals.TC2,
+                &mut delay,
+                &mut pins.port,
+            )
+            .unwrap();
+
+        let joystick = pins.joystick.init(&mut pins.port);
+
+        let buttons = pins.buttons.init(&mut pins.port);
+
+        let i2c = pins.i2c.init(
+            &mut clocks,
+            KiloHertz(400),
+            peripherals.SERCOM2,
+            &mut peripherals.MCLK,
+            &mut pins.port,
+        );
+
+        let mut lis3dh = Lis3dh::new_i2c(i2c, lis3dh::SlaveAddr::Alternate).unwrap();
+        lis3dh.set_range(lis3dh::Range::G2).unwrap();
+        lis3dh.set_datarate(lis3dh::DataRate::Hz_100).unwrap();
+
+        let adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
+        let light = pins.light_pin.into_function_b(&mut pins.port);
+
+        let mut fb = FrameBuffer::new();
+
+        HW {
+            delay,
+            display,
+            joystick,
+            buttons,
+            lis3dh,
+            adc1,
+            light,
+            fb,
+        }
+    }
 }
 
 #[entry]
 fn main() -> ! {
-    let mut peripherals = pac::Peripherals::take().unwrap();
-    let mut pins = Pins::new(peripherals.PORT).split();
-
-    let core = pac::CorePeripherals::take().unwrap();
-    let mut clocks = GenericClockController::with_internal_32kosc(
-        peripherals.GCLK,
-        &mut peripherals.MCLK,
-        &mut peripherals.OSC32KCTRL,
-        &mut peripherals.OSCCTRL,
-        &mut peripherals.NVMCTRL,
-    );
-    let mut delay = Delay::new(core.SYST, &mut clocks);
-
-    let (display, _backlight) = pins
-        .display
-        .init(
-            &mut clocks,
-            peripherals.SERCOM4,
-            &mut peripherals.MCLK,
-            peripherals.TC2,
-            &mut delay,
-            &mut pins.port,
-        )
-        .unwrap();
-
-    let joystick = pins.joystick.init(&mut pins.port);
-
-    let buttons = pins.buttons.init(&mut pins.port);
-
-    let i2c = pins.i2c.init(
-        &mut clocks,
-        KiloHertz(400),
-        peripherals.SERCOM2,
-        &mut peripherals.MCLK,
-        &mut pins.port,
-    );
-
-    let mut lis3dh = Lis3dh::new_i2c(i2c, lis3dh::SlaveAddr::Alternate).unwrap();
-    lis3dh.set_range(lis3dh::Range::G2).unwrap();
-    lis3dh.set_datarate(lis3dh::DataRate::Hz_100).unwrap();
-
-    let adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
-    let light = pins.light_pin.into_function_b(&mut pins.port);
-
-    let mut hw = HW {
-        delay,
-        display,
-        joystick,
-        buttons,
-        lis3dh,
-        adc1,
-        light,
-    };
-
-    let mut fb = FrameBuffer::new();
+    let mut hw = HW::new();
 
     let mut console = heapless::String::<256>::new();
     let mut frame = 0;
@@ -136,12 +136,12 @@ fn main() -> ! {
 
     let mut dbg = false;
 
-    fb.clear(Rgb565::WHITE).unwrap();
+    hw.fb.clear(Rgb565::WHITE).unwrap();
 
-    fb.clear(Rgb565::WHITE).unwrap();
+    hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Hello...", Point::new(30, 60), text_style());
-    text.draw(&mut fb).unwrap();
-    upload(&fb, &mut hw.display);
+    text.draw(&mut hw.fb).unwrap();
+    upload(&hw.fb, &mut hw.display);
 
     'wait: loop {
         for event in hw.buttons.events() {
@@ -152,10 +152,10 @@ fn main() -> ! {
         }
     }
 
-    fb.clear(Rgb565::WHITE).unwrap();
+    hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
-    text.draw(&mut fb).unwrap();
-    upload(&fb, &mut hw.display);
+    text.draw(&mut hw.fb).unwrap();
+    upload(&hw.fb, &mut hw.display);
 
     hw.delay.delay_ms(500u16);
 
@@ -169,7 +169,7 @@ fn main() -> ! {
     }
 
     loop {
-        fb.clear(Rgb565::WHITE).unwrap();
+        hw.fb.clear(Rgb565::WHITE).unwrap();
 
         for event in hw.buttons.events() {
             match event {
@@ -214,7 +214,7 @@ fn main() -> ! {
         }
 
         let nomnom = Image::new(&raw_image, Point::new(pos.0 as i32, pos.1 as i32));
-        nomnom.draw(&mut fb).unwrap();
+        nomnom.draw(&mut hw.fb).unwrap();
 
         if dbg {
             console.clear();
@@ -233,19 +233,10 @@ fn main() -> ! {
             writeln!(&mut console, "light {}", light_data).unwrap();
 
             let text = Text::new(&console, Point::new(1, 9), text_style());
-            text.draw(&mut fb).unwrap();
+            text.draw(&mut hw.fb).unwrap();
         }
 
-        upload(&fb, &mut hw.display);
-
-        //display
-        //    .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
-        //    .map_err(my_err)
-        //    .unwrap();
-        //display
-        //    .write_pixels(fb.inner.iter().map(|c| c.into_storage()))
-        //    .map_err(my_err)
-        //    .unwrap();
+        upload(&hw.fb, &mut hw.display);
     }
 }
 
