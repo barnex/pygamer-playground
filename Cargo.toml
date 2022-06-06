@@ -5,6 +5,10 @@ authors = ["Arne Vansteenkiste <barnex@gmail.com>"]
 edition = "2021"
 
 [[bin]]
+name = "nomnom"
+path = "src/nomnom.rs"
+
+[[bin]]
 name = "fastlcd"
 path = "src/fastlcd.rs"
 
