@@ -14,8 +14,8 @@
 
 set -e
 
-mv -f *.uf2 *.bin /tmp
+mv -f *.uf2 *.bin /tmp || echo ""
 cargo build --release --bin $1
-cargo objcopy --release --bin $1 -- -O binary $1.bin
+cargo objcopy --quiet --release --bin $1 -- -O binary $1.bin
 uf2conv $1.bin --base 0x4000 --output $1.uf2
 mv -f $1.bin /tmp

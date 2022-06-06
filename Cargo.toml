@@ -8,6 +8,10 @@ edition = "2021"
 name = "fastlcd"
 path = "src/fastlcd.rs"
 
+[[bin]]
+name = "blinky_basic"
+path = "src/blinky_basic.rs"
+
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
 embedded-graphics = "0.7.1"
