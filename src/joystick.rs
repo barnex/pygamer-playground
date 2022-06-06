@@ -15,6 +15,7 @@ use lis3dh::accelerometer::vector::F32x3;
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
+use hal::adc::Adc;
 use hal::clock::GenericClockController;
 use hal::gpio;
 use hal::hal::spi;
@@ -105,7 +106,9 @@ fn main() -> ! {
         &mut peripherals.OSCCTRL,
         &mut peripherals.NVMCTRL,
     );
-    let mut pins = Pins::new(peripherals.PORT).split();
+    let mut pins = Pins::new(peripherals.PORT);
+    let mut pins = pins.split();
+
     let mut delay = hal::delay::Delay::new(core.SYST, &mut clocks);
 
     let mut display = init_display(
@@ -120,8 +123,7 @@ fn main() -> ! {
     .unwrap();
 
     //let mut pins = Pins::new(peripherals.PORT).split();
-    let mut adc1 =
-        hal::adc::Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
+    //let mut adc1 = hal::adc::Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
     let mut joystick = pins.joystick.init(&mut pins.port);
 
     let mut fb = FrameBuffer::new();
@@ -141,6 +143,9 @@ fn main() -> ! {
     lis3dh.set_range(lis3dh::Range::G2).unwrap();
     lis3dh.set_datarate(lis3dh::DataRate::Hz_100).unwrap();
 
+    let mut adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
+    let mut light = pins.light_pin.into_function_b(&mut pins.port);
+
     let mut frame = 0;
     loop {
         console.clear();
@@ -155,6 +160,10 @@ fn main() -> ! {
         writeln!(&mut console, "gx {x:+0.3}").unwrap();
         writeln!(&mut console, "gy {y:+0.3}").unwrap();
         writeln!(&mut console, "gz {z:+0.3}").unwrap();
+
+
+        let light_data: u16 = adc1.read(&mut light).unwrap();
+        writeln!(&mut console, "light {}", light_data).unwrap();
 
         for event in buttons.events() {
             writeln!(&mut console, "{:?}", event).unwrap();
