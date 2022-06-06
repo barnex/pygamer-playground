@@ -1,4 +1,4 @@
 /target
-out.bin
-out.uf2
+*.bin
+*.uf2
 ferris.bmp

@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Arne Vansteenkiste <barnex@gmail.com>"]
 edition = "2021"
 
+[[bin]]
+name = "fastlcd"
+path = "src/fastlcd.rs"
+
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
 embedded-graphics = "0.7.1"
