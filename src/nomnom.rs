@@ -117,6 +117,18 @@ impl HW {
             fb,
         }
     }
+
+    // Copy the framebuffer to the display.
+    pub fn present_fb(&mut self) {
+        self.display
+            .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
+            .map_err(my_err)
+            .unwrap();
+        self.display
+            .write_pixels(self.fb.inner.iter().map(|c| c.into_storage()))
+            .map_err(my_err)
+            .unwrap();
+    }
 }
 
 #[entry]
@@ -137,11 +149,10 @@ fn main() -> ! {
     let mut dbg = false;
 
     hw.fb.clear(Rgb565::WHITE).unwrap();
-
-    hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Hello...", Point::new(30, 60), text_style());
     text.draw(&mut hw.fb).unwrap();
-    upload(&hw.fb, &mut hw.display);
+    //upload(&hw.fb, &mut hw.display);
+    hw.present_fb();
 
     'wait: loop {
         for event in hw.buttons.events() {
@@ -155,7 +166,8 @@ fn main() -> ! {
     hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
     text.draw(&mut hw.fb).unwrap();
-    upload(&hw.fb, &mut hw.display);
+    //upload(&hw.fb, &mut hw.display);
+    hw.present_fb();
 
     hw.delay.delay_ms(500u16);
 
@@ -236,19 +248,9 @@ fn main() -> ! {
             text.draw(&mut hw.fb).unwrap();
         }
 
-        upload(&hw.fb, &mut hw.display);
+        //upload(&hw.fb, &mut hw.display);
+        hw.present_fb();
     }
-}
-
-fn upload(fb: &FrameBuffer, display: &mut Display) {
-    display
-        .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
-        .map_err(my_err)
-        .unwrap();
-    display
-        .write_pixels(fb.inner.iter().map(|c| c.into_storage()))
-        .map_err(my_err)
-        .unwrap();
 }
 
 #[derive(Debug)]
