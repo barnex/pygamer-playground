@@ -12,14 +12,20 @@ path = "src/fastlcd.rs"
 name = "blinky_basic"
 path = "src/blinky_basic.rs"
 
+[[bin]]
+name = "neopixel_adc_light"
+path = "src/neopixel_adc_light.rs"
+
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
+bytemuck = "*"
 embedded-graphics = "0.7.1"
 embedded-hal = "0.2"
-panic-halt = "0.2"
-tinybmp = "0.3.1"
 heapless = "0.7"
-bytemuck = "*"
+panic-halt = "0.2"
+smart-leds = "0.3"
+tinybmp = "0.3.1"
+ws2812-timer-delay = "0.3"
 
 [profile.release]
 lto = "fat"
