@@ -2,6 +2,8 @@
 #![no_main]
 
 mod lib;
+use bsp::buttons::ButtonReader;
+use bsp::pins::JoystickReader;
 use lib::display::*;
 use lib::framebuffer::*;
 
@@ -47,6 +49,38 @@ use eg::text::Text;
 
 use tinybmp::Bmp;
 
+use lis3dh::*;
+use pac::SERCOM2;
+use pygamer::gpio::v2::Alternate;
+use pygamer::gpio::v2::B;
+use pygamer::gpio::v2::C;
+use pygamer::gpio::v2::PA12;
+use pygamer::gpio::v2::PA13;
+use pygamer::gpio::v2::PB04;
+use pygamer::sercom::v1::Pad;
+use pygamer::sercom::v2::Pad0;
+use pygamer::sercom::v2::Pad1;
+use pygamer::sercom::I2CMaster2;
+type AccMtr = Lis3dh<
+    Lis3dhI2C<
+        I2CMaster2<
+            Pad<SERCOM2, Pad0, gpio::Pin<PA12, Alternate<C>>>,
+            Pad<SERCOM2, Pad1, gpio::Pin<PA13, Alternate<C>>>,
+        >,
+    >,
+>;
+
+// Hardware state
+struct HW {
+    pub delay: Delay,
+    pub display: Display,
+    pub joystick: JoystickReader,
+    pub buttons: ButtonReader,
+    pub lis3dh: AccMtr,
+    pub adc1: Adc<pac::ADC1>,
+    pub light: gpio::Pin<PB04, Alternate<B>>,
+}
+
 #[entry]
 fn main() -> ! {
     let mut peripherals = pac::Peripherals::take().unwrap();
@@ -62,7 +96,7 @@ fn main() -> ! {
     );
     let mut delay = Delay::new(core.SYST, &mut clocks);
 
-    let (mut display, _backlight) = pins
+    let (display, _backlight) = pins
         .display
         .init(
             &mut clocks,
@@ -93,14 +127,17 @@ fn main() -> ! {
     let mut adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
     let mut light = pins.light_pin.into_function_b(&mut pins.port);
 
+    let mut hw = HW {
+        delay,
+        display,
+        joystick,
+        buttons,
+        lis3dh,
+        adc1,
+        light,
+    };
+
     let mut fb = FrameBuffer::new();
-
-    struct HW {
-        pub delay: Delay,
-        pub display: Display,
-    }
-
-    let mut hw = HW { delay, display };
 
     let mut console = heapless::String::<256>::new();
     let mut frame = 0;
@@ -123,7 +160,7 @@ fn main() -> ! {
     upload(&fb, &mut hw.display);
 
     'wait: loop {
-        for event in buttons.events() {
+        for event in hw.buttons.events() {
             match event {
                 Keys::ADown | Keys::BDown => break 'wait,
                 _ => (),
@@ -139,7 +176,7 @@ fn main() -> ! {
     hw.delay.delay_ms(500u16);
 
     'wait2: loop {
-        for event in buttons.events() {
+        for event in hw.buttons.events() {
             match event {
                 Keys::ADown | Keys::BDown => break 'wait2,
                 _ => (),
@@ -150,7 +187,7 @@ fn main() -> ! {
     loop {
         fb.clear(Rgb565::WHITE).unwrap();
 
-        for event in buttons.events() {
+        for event in hw.buttons.events() {
             match event {
                 Keys::SelectDown => dbg = !dbg,
                 _ => (),
@@ -161,7 +198,7 @@ fn main() -> ! {
             x: gx,
             y: gy,
             z: gz,
-        } = lis3dh.accel_norm().unwrap();
+        } = hw.lis3dh.accel_norm().unwrap();
 
         const ACC: f32 = 0.08;
         vel.0 += ACC * gx;
@@ -201,14 +238,14 @@ fn main() -> ! {
 
             writeln!(&mut console, "Frame: {frame}").unwrap();
 
-            let (x, y) = joystick.read(&mut adc1);
+            let (x, y) = hw.joystick.read(&mut hw.adc1);
             writeln!(&mut console, "Joystick: {x} {y}").unwrap();
 
             writeln!(&mut console, "gx {gx:+0.3}").unwrap();
             writeln!(&mut console, "gy {gy:+0.3}").unwrap();
             writeln!(&mut console, "gz {gz:+0.3}").unwrap();
 
-            let light_data: u16 = adc1.read(&mut light).unwrap();
+            let light_data: u16 = hw.adc1.read(&mut hw.light).unwrap();
             writeln!(&mut console, "light {}", light_data).unwrap();
 
             let text = Text::new(&console, Point::new(1, 9), text_style());
