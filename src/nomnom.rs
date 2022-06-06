@@ -4,9 +4,14 @@
 mod lib;
 use lib::types::*;
 
-use lis3dh::accelerometer::vector::F32x3;
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
+
+use core::fmt::Write;
+
+use pac::gclk::pchctrl::GEN_A::GCLK11;
+use pac::SERCOM4;
+use pac::{CorePeripherals, Peripherals};
 
 use hal::adc::Adc;
 use hal::clock::GenericClockController;
@@ -15,32 +20,35 @@ use hal::hal::spi;
 use hal::sercom;
 use hal::sercom::SPIMaster4;
 use hal::time::KiloHertz;
-use pac::SERCOM4;
-use pac::{CorePeripherals, Peripherals};
-use pygamer::buttons::Keys;
-use pygamer::{entry, hal, pac, Pins};
 
-use embedded_graphics::draw_target::DrawTarget;
-use embedded_graphics::image::Image;
-use embedded_graphics::mono_font;
-use embedded_graphics::mono_font::MonoTextStyle;
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::*;
-use embedded_graphics::primitives::{PrimitiveStyleBuilder, Rectangle};
-use embedded_graphics::text::Text;
+use pygamer as bsp;
+
+use bsp::buttons::Keys;
+use bsp::gpio::Port;
+use bsp::prelude::*;
+use bsp::pwm;
+use bsp::sercom::PadPin;
+use bsp::{entry, hal, pac, Pins};
+
+use lis3dh::accelerometer::vector::F32x3;
 use lis3dh::{accelerometer::Accelerometer, Lis3dh};
-use pac::gclk::pchctrl::GEN_A::GCLK11;
-use pygamer::gpio::Port;
-use pygamer::prelude::*;
-use pygamer::pwm;
-use pygamer::sercom::PadPin;
 
-use core::fmt::Write;
-//use st7735_lcd as lcd;
+use eg::prelude::*;
+use embedded_graphics as eg;
+
+use eg::draw_target::DrawTarget;
+use eg::image::Image;
+use eg::mono_font;
+use eg::mono_font::MonoTextStyle;
+use eg::pixelcolor::Rgb565;
+use eg::primitives::PrimitiveStyleBuilder;
+use eg::primitives::Rectangle;
+use eg::text::Text;
+
 use tinybmp::Bmp;
 
 fn init_display(
-    display: pygamer::pins::Display,
+    display: bsp::pins::Display,
     clocks: &mut GenericClockController,
     sercom4: pac::SERCOM4,
     mclk: &mut pac::MCLK,
@@ -49,7 +57,7 @@ fn init_display(
     port: &mut Port,
 ) -> Result<Display, ()> {
     let gclk0 = clocks.gclk0();
-    let tft_spi = pygamer::sercom::SPIMaster4::new(
+    let tft_spi = bsp::sercom::SPIMaster4::new(
         &clocks.sercom4_core(&gclk0).ok_or(())?,
         32.mhz(),
         spi::Mode {
