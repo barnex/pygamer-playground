@@ -2,40 +2,23 @@
 #![no_main]
 
 mod lib;
-use lib::accellerometer::*;
 use lib::display::*;
-use lib::framebuffer::*;
 use lib::hw::*;
-
-use bsp::buttons::ButtonReader;
-use bsp::pins::JoystickReader;
 
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
 use core::fmt::Write;
 
-use pac::gclk::pchctrl::GEN_A::GCLK11;
-
-use hal::adc::Adc;
-use hal::clock::GenericClockController;
-use hal::delay::Delay;
-use hal::gpio;
-use hal::time::KiloHertz;
-
 use pygamer as bsp;
 
 use bsp::buttons::Keys;
-use bsp::gpio::v2::Alternate;
-use bsp::gpio::v2::B;
-use bsp::gpio::v2::PB04;
+use bsp::entry;
 use bsp::prelude::*;
-use bsp::{entry, hal, pac, Pins};
 
 use lis3dh::accelerometer::vector::F32x3;
-use lis3dh::{accelerometer::Accelerometer, Lis3dh};
+use lis3dh::accelerometer::Accelerometer;
 
-use eg::prelude::*;
 use embedded_graphics as eg;
 
 use eg::draw_target::DrawTarget;
@@ -43,6 +26,7 @@ use eg::image::Image;
 use eg::mono_font;
 use eg::mono_font::MonoTextStyle;
 use eg::pixelcolor::Rgb565;
+use eg::prelude::*;
 use eg::text::Text;
 
 use tinybmp::Bmp;
@@ -167,13 +151,6 @@ fn main() -> ! {
         //upload(&hw.fb, &mut hw.display);
         hw.present_fb();
     }
-}
-
-#[derive(Debug)]
-struct MyErr {}
-
-fn my_err<E>(_e: E) -> MyErr {
-    MyErr {}
 }
 
 fn text_style() -> MonoTextStyle<'static, Rgb565> {
