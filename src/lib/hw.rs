@@ -1,4 +1,5 @@
 use crate::lib::types::*;
+use crate::LINE_H;
 
 use crate::lib::accellerometer::*;
 
@@ -103,15 +104,35 @@ impl HW {
             .unwrap();
     }
 
+    pub fn joystick_read(&mut self) -> (i16, i16) {
+        let (x, y) = self.joystick.read(&mut self.adc1);
+        (x as i16 - 2048, y as i16 - 2048)
+    }
 
-pub fn wait_for_key(&mut self) {
-    'wait: loop {
-        for event in self.buttons.events() {
-            match event {
-                Keys::ADown | Keys::BDown => break 'wait,
-                _ => (),
+    pub fn button_pressed(&mut self, button: Keys) -> bool {
+        self.buttons.events().find(|b| *b == button).is_some()
+    }
+
+    pub fn wait_for_key(&mut self) {
+        'wait: loop {
+            for event in self.buttons.events() {
+                match event {
+                    Keys::ADown | Keys::BDown => break 'wait,
+                    _ => (),
+                }
             }
         }
     }
+
+    pub fn show_msg(&mut self, msg: &str) {
+        self.fb.clear(Rgb565::WHITE).unwrap();
+        Text::new(msg, Point::new(0, LINE_H as i32 - 2), text_style())
+            .draw(&mut self.fb)
+            .unwrap();
+        self.present_fb();
+    }
 }
+
+pub fn text_style() -> MonoTextStyle<'static, Rgb565> {
+    MonoTextStyle::new(&eg::mono_font::ascii::FONT_7X13_BOLD, Rgb565::BLUE)
 }
