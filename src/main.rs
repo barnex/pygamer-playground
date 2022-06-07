@@ -13,13 +13,33 @@ use panic_halt as _;
 fn main() -> ! {
     let mut hw = HW::new();
 
-    let selection = show_menu(&mut hw, &["foo", "bar", "baz"]);
+    let opts = [
+        "foo",
+        "bar",
+        "baz",
+        "Mr Jiggles",
+        "Mommy",
+        "Daddy",
+        "Twinkeltoes",
+        "Tomatoes",
+        "too much",
+        "Enough!",
+    ];
 
-    let mut msg = heapless::String::<256>::new();
-    writeln!(&mut msg, "Thanks for choosing {selection}");
-    hw.show_msg(&msg);
+    loop {
+        let selection = show_menu(&mut hw, &opts);
 
-    loop {}
+        let mut msg = heapless::String::<256>::new();
+        writeln!(
+            &mut msg,
+            "Thanks for choosing {selection}\n({})",
+            opts[selection]
+        )
+        .unwrap();
+        hw.show_msg(&msg);
+
+        hw.wait_for_key();
+    }
 
     //lib::app::nomnom::main(&mut hw);
 }
@@ -27,15 +47,17 @@ fn main() -> ! {
 fn show_menu(hw: &mut HW, opts: &[&str]) -> usize {
     let mut sel: i32 = 0;
     loop {
+        let mut must_sleep = false;
         hw.fb.clear(Rgb565::WHITE).unwrap();
 
-        if hw.joystick_read().1 < -1024 {
+        let joy_y = hw.joystick_read().1;
+        if joy_y < -1400 {
             sel -= 1;
-            hw.delay.delay_ms(300u16);
+            must_sleep = true;
         }
-        if hw.joystick_read().1 > 1024 {
+        if joy_y > 1400 {
             sel += 1;
-            hw.delay.delay_ms(300u16);
+            must_sleep = true;
         }
         if sel < 0 {
             sel = opts.len() as i32 - 1;
@@ -51,7 +73,7 @@ fn show_menu(hw: &mut HW, opts: &[&str]) -> usize {
         for (i, opt) in opts.iter().enumerate() {
             let i = i as i32;
             let x = 1;
-            let y = (i + 1) as i32 * LINE_H as i32;
+            let y = (i + 1) as i32 * LINE_H as i32 - 3;
             let style = if i == sel { sel_style() } else { text_style() };
             if i == sel {
                 hw.fb
@@ -59,7 +81,7 @@ fn show_menu(hw: &mut HW, opts: &[&str]) -> usize {
                         &eg::primitives::Rectangle::new(
                             eg::geometry::Point {
                                 x,
-                                y: y - LINE_H as i32 + 3,
+                                y: y - LINE_H as i32 + 4,
                             },
                             eg::geometry::Size {
                                 width: SCREEN_W as u32 - 2,
@@ -76,6 +98,14 @@ fn show_menu(hw: &mut HW, opts: &[&str]) -> usize {
         }
 
         hw.present_fb();
+        if must_sleep {
+            for _tick in 0..16 {
+                if hw.joystick_read().1.abs() < 800 {
+                    break;
+                }
+                hw.delay.delay_ms(10u16);
+            }
+        }
     }
 }
 
