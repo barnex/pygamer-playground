@@ -4,20 +4,19 @@ use crate::lib::framebuffer::*;
 
 use pac::gclk::pchctrl::GEN_A::GCLK11;
 
-use pygamer as bsp;
-
-use bsp::buttons::ButtonReader;
-use bsp::pins::JoystickReader;
-
 use hal::adc::Adc;
 use hal::clock::GenericClockController;
 use hal::delay::Delay;
 use hal::gpio;
 use hal::time::KiloHertz;
 
+use pygamer as bsp;
+
+use bsp::buttons::ButtonReader;
 use bsp::gpio::v2::Alternate;
 use bsp::gpio::v2::B;
 use bsp::gpio::v2::PB04;
+use bsp::pins::JoystickReader;
 use bsp::{hal, pac, Pins};
 
 use lis3dh::Lis3dh;
