@@ -4,3 +4,4 @@ pub mod types;
 pub mod accellerometer;
 pub mod hw;
 pub mod framebuffer;
+pub mod app;

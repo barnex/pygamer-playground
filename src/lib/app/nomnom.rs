@@ -1,9 +1,4 @@
-#![no_std]
-#![no_main]
-
-mod lib;
-use lib::display::*;
-use lib::hw::*;
+use crate::lib::types::*;
 
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
@@ -13,7 +8,6 @@ use core::fmt::Write;
 use pygamer as bsp;
 
 use bsp::buttons::Keys;
-use bsp::entry;
 use bsp::prelude::*;
 
 use lis3dh::accelerometer::vector::F32x3;
@@ -26,19 +20,15 @@ use eg::image::Image;
 use eg::mono_font;
 use eg::mono_font::MonoTextStyle;
 use eg::pixelcolor::Rgb565;
-use eg::prelude::*;
 use eg::text::Text;
 
 use tinybmp::Bmp;
 
-#[entry]
-fn main() -> ! {
-    let mut hw = HW::new();
-
+pub fn main(hw: &mut HW) {
     let mut console = heapless::String::<256>::new();
     let mut frame = 0;
-
-    let raw_image: Bmp<Rgb565> = Bmp::from_slice(include_bytes!("../assets/nomnom64.bmp")).unwrap();
+    let raw_image: Bmp<Rgb565> =
+        Bmp::from_slice(include_bytes!("../../../assets/nomnom64.bmp")).unwrap();
 
     let mut pos = (0.0f32, 0.0f32);
     let mut vel = (0.0f32, 0.0f32);
@@ -51,34 +41,16 @@ fn main() -> ! {
     hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Hello...", Point::new(30, 60), text_style());
     text.draw(&mut hw.fb).unwrap();
-    //upload(&hw.fb, &mut hw.display);
     hw.present_fb();
 
-    'wait: loop {
-        for event in hw.buttons.events() {
-            match event {
-                Keys::ADown | Keys::BDown => break 'wait,
-                _ => (),
-            }
-        }
-    }
+    hw.wait_for_key();
 
     hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
     text.draw(&mut hw.fb).unwrap();
-    //upload(&hw.fb, &mut hw.display);
     hw.present_fb();
 
-    hw.delay.delay_ms(500u16);
-
-    'wait2: loop {
-        for event in hw.buttons.events() {
-            match event {
-                Keys::ADown | Keys::BDown => break 'wait2,
-                _ => (),
-            }
-        }
-    }
+    hw.wait_for_key();
 
     loop {
         hw.fb.clear(Rgb565::WHITE).unwrap();

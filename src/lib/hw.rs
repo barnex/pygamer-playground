@@ -1,6 +1,6 @@
+use crate::lib::types::*;
+
 use crate::lib::accellerometer::*;
-use crate::lib::display::*;
-use crate::lib::framebuffer::*;
 
 use pac::gclk::pchctrl::GEN_A::GCLK11;
 
@@ -20,8 +20,6 @@ use bsp::pins::JoystickReader;
 use bsp::{hal, pac, Pins};
 
 use lis3dh::Lis3dh;
-
-use embedded_graphics::prelude::*;
 
 // Hardware state
 pub struct HW {
@@ -104,4 +102,16 @@ impl HW {
             .write_pixels(self.fb.inner.iter().map(|c| c.into_storage()))
             .unwrap();
     }
+
+
+pub fn wait_for_key(&mut self) {
+    'wait: loop {
+        for event in self.buttons.events() {
+            match event {
+                Keys::ADown | Keys::BDown => break 'wait,
+                _ => (),
+            }
+        }
+    }
+}
 }

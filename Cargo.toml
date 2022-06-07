@@ -5,8 +5,8 @@ authors = ["Arne Vansteenkiste <barnex@gmail.com>"]
 edition = "2021"
 
 [[bin]]
-name = "nomnom"
-path = "src/nomnom.rs"
+name = "main"
+path = "src/main.rs"
 
 [dependencies]
 pygamer = { git = "https://github.com/atsamd-rs/atsamd" }
