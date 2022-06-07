@@ -9,19 +9,19 @@ pub const ISCREEN_H: i32 = SCREEN_H as i32;
 use st7735_lcd;
 
 pub type Display = st7735_lcd::ST7735<
-    SPIMaster4<
+    sercom::SPIMaster4<
         sercom::Pad<
-            SERCOM4,
+            pac::SERCOM4,
             sercom::v2::Pad2,
             gpio::Pin<gpio::v2::PB14, gpio::v2::Alternate<gpio::v2::C>>,
         >,
         sercom::Pad<
-            SERCOM4,
+            pac::SERCOM4,
             sercom::v2::Pad3,
             gpio::Pin<gpio::v2::PB15, gpio::v2::Alternate<gpio::v2::C>>,
         >,
         sercom::Pad<
-            SERCOM4,
+            pac::SERCOM4,
             sercom::v2::Pad1,
             gpio::Pin<gpio::v2::PB13, gpio::v2::Alternate<gpio::v2::C>>,
         >,
