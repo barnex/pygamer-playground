@@ -8,9 +8,12 @@ pub use hal::clock::GenericClockController;
 pub use hal::gpio;
 pub use hal::sercom;
 
+pub use embedded_hal::prelude::*;
+
 pub use embedded_graphics as eg;
 
 pub use eg::draw_target::DrawTarget;
+pub use eg::draw_target::DrawTargetExt;
 pub use eg::image::Image;
 pub use eg::mono_font;
 pub use eg::mono_font::MonoTextStyle;

@@ -4,6 +4,7 @@
 mod lib;
 use bsp::entry;
 use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
+use lib::app;
 use lib::types::*;
 
 #[cfg(not(feature = "panic_led"))]
@@ -14,34 +15,20 @@ fn main() -> ! {
     let mut hw = HW::new();
 
     let opts = [
-        "foo",
-        "bar",
-        "baz",
-        "Mr Jiggles",
-        "Mommy",
-        "Daddy",
-        "Twinkeltoes",
-        "Tomatoes",
-        "too much",
-        "Enough!",
+        "Kitty Cat", //
+        "Sensors",
     ];
 
     loop {
         let selection = show_menu(&mut hw, &opts);
 
-        let mut msg = heapless::String::<256>::new();
-        writeln!(
-            &mut msg,
-            "Thanks for choosing {selection}\n({})",
-            opts[selection]
-        )
-        .unwrap();
-        hw.show_msg(&msg);
-
-        hw.wait_for_key();
+        match selection {
+            0 => app::nomnom::main(&mut hw),
+            1 => app::sensors::main(&mut hw),
+            _ => (),
+        }
     }
 
-    //lib::app::nomnom::main(&mut hw);
 }
 
 fn show_menu(hw: &mut HW, opts: &[&str]) -> usize {
