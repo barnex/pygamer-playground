@@ -12,7 +12,7 @@ use panic_halt as _;
 
 #[entry]
 fn main() -> ! {
-    let mut hw = HW::new();
+    let mut sys = Sys::new();
 
     let opts = [
         "Nom Nom Cat", //
@@ -20,15 +20,14 @@ fn main() -> ! {
     ];
 
     loop {
-        let selection = show_menu(&mut hw, &opts);
+        let selection = show_menu(&mut sys.hw, &opts);
 
         match selection {
-            0 => app::nomnom::main(&mut hw),
-            1 => app::sensors::main(&mut hw),
+            0 => app::nomnom::main(&mut sys.hw),
+            1 => app::sensors::main(&mut sys.hw),
             _ => (),
         }
     }
-
 }
 
 fn show_menu(hw: &mut HW, opts: &[&str]) -> usize {

@@ -1,4 +1,4 @@
-//! An app that reads out sensors / inputs.
+//! An app that displays sensors / inputs readouts.
 
 use crate::lib::types::*;
 
