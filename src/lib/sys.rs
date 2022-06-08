@@ -1,5 +1,7 @@
 use crate::lib::types::*;
 
+use lis3dh::accelerometer::RawAccelerometer;
+
 pub struct Sys {
     pub hw: HW,
     pub fb: FrameBuffer,
@@ -49,6 +51,15 @@ impl Sys {
     pub fn joystick_read(&mut self) -> (i16, i16) {
         let (x, y) = self.hw.joystick.read(&mut self.hw.adc1);
         (x as i16 - 2048, y as i16 - 2048)
+    }
+
+    pub fn accel_read(&mut self) -> (i16, i16, i16) {
+        let lis3dh::accelerometer::vector::I16x3 { x, y, z } = self.hw.lis3dh.accel_raw().unwrap();
+        (x, y, z)
+    }
+
+    pub fn light_read(&mut self) -> u16 {
+        self.hw.adc1.read(&mut self.hw.light).unwrap()
     }
 
     pub fn show_menu(self: &mut Self, opts: &[&str]) -> usize {
