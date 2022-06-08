@@ -105,20 +105,6 @@ impl HW {
         }
     }
 
-    pub fn button_pressed(&mut self, button: Keys) -> bool {
-        self.buttons.events().find(|b| *b == button).is_some()
-    }
-
-    pub fn wait_for_key(&mut self) {
-        'wait: loop {
-            for event in self.buttons.events() {
-                match event {
-                    Keys::ADown | Keys::BDown => break 'wait,
-                    _ => (),
-                }
-            }
-        }
-    }
 }
 
 pub fn text_style() -> MonoTextStyle<'static, Rgb565> {

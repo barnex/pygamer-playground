@@ -1,9 +1,10 @@
 use crate::lib::types::*;
 
+use bsp::buttons::ButtonReader;
 use lis3dh::accelerometer::RawAccelerometer;
 
 pub struct Sys {
-    pub hw: HW,
+    hw: HW,
     pub fb: FrameBuffer,
 }
 
@@ -62,6 +63,25 @@ impl Sys {
         self.hw.adc1.read(&mut self.hw.light).unwrap()
     }
 
+    pub fn button_pressed(&mut self, button: Keys) -> bool {
+        self.hw.buttons.events().find(|b| *b == button).is_some()
+    }
+
+    pub fn wait_for_key(&mut self) {
+        'wait: loop {
+            for event in self.hw.buttons.events() {
+                match event {
+                    Keys::ADown | Keys::BDown => break 'wait,
+                    _ => (),
+                }
+            }
+        }
+    }
+
+    pub fn button_events(&mut self) -> bsp::buttons::ButtonIter {
+        self.hw.buttons.events()
+    }
+
     pub fn show_menu(self: &mut Self, opts: &[&str]) -> usize {
         let mut sel: i32 = 0;
         loop {
@@ -84,7 +104,7 @@ impl Sys {
                 sel = 0;
             }
 
-            if self.hw.button_pressed(Keys::ADown) {
+            if self.button_pressed(Keys::ADown) {
                 return sel as usize;
             }
 

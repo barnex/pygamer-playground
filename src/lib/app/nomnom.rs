@@ -5,9 +5,6 @@ use panic_halt as _;
 
 use bsp::buttons::Keys;
 
-use lis3dh::accelerometer::vector::F32x3;
-use lis3dh::accelerometer::Accelerometer;
-
 use embedded_graphics as eg;
 
 use eg::draw_target::DrawTarget;
@@ -34,30 +31,30 @@ pub fn main(sys: &mut Sys) {
     text.draw(&mut sys.fb).unwrap();
     sys.present_fb();
 
-    sys.hw.wait_for_key();
+    sys.wait_for_key();
 
     sys.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
     text.draw(&mut sys.fb).unwrap();
     sys.present_fb();
 
-    sys.hw.wait_for_key();
+    sys.wait_for_key();
 
     loop {
         sys.fb.clear(Rgb565::WHITE).unwrap();
 
-        for event in sys.hw.buttons.events() {
+        for event in sys.button_events() {
             match event {
                 Keys::SelectDown => dbg = !dbg,
                 _ => (),
             }
         }
 
-        let F32x3 {
-            x: gx,
-            y: gy,
-            z: gz,
-        } = sys.hw.lis3dh.accel_norm().unwrap();
+        let (gx, gy, gz) = sys.accel_read();
+
+        let gx = gx as f32 / 16368.0;
+        let gy = gy as f32 / 16368.0;
+        let gz = gz as f32 / 16368.0;
 
         const ACC: f32 = 0.08;
         vel.0 += ACC * gx;
@@ -94,4 +91,3 @@ pub fn main(sys: &mut Sys) {
         sys.present_fb();
     }
 }
-
