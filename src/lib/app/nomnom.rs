@@ -3,12 +3,10 @@ use crate::lib::types::*;
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
-use core::fmt::Write;
 
 use pygamer as bsp;
 
 use bsp::buttons::Keys;
-use bsp::prelude::*;
 
 use lis3dh::accelerometer::vector::F32x3;
 use lis3dh::accelerometer::Accelerometer;
@@ -25,8 +23,8 @@ use eg::text::Text;
 use tinybmp::Bmp;
 
 pub fn main(hw: &mut HW) {
-    let mut console = heapless::String::<256>::new();
-    let mut frame = 0;
+    //let mut console = heapless::String::<256>::new();
+    //let mut frame = 0;
     let raw_image: Bmp<Rgb565> =
         Bmp::from_slice(include_bytes!("../../../assets/nomnom64.bmp")).unwrap();
 
@@ -100,27 +98,6 @@ pub fn main(hw: &mut HW) {
         let nomnom = Image::new(&raw_image, Point::new(pos.0 as i32, pos.1 as i32));
         nomnom.draw(&mut hw.fb).unwrap();
 
-        if dbg {
-            console.clear();
-            frame += 1;
-
-            writeln!(&mut console, "Frame: {frame}").unwrap();
-
-            let (x, y) = hw.joystick.read(&mut hw.adc1);
-            writeln!(&mut console, "Joystick: {x} {y}").unwrap();
-
-            writeln!(&mut console, "gx {gx:+0.3}").unwrap();
-            writeln!(&mut console, "gy {gy:+0.3}").unwrap();
-            writeln!(&mut console, "gz {gz:+0.3}").unwrap();
-
-            let light_data: u16 = hw.adc1.read(&mut hw.light).unwrap();
-            writeln!(&mut console, "light {}", light_data).unwrap();
-
-            let text = Text::new(&console, Point::new(1, 9), text_style());
-            text.draw(&mut hw.fb).unwrap();
-        }
-
-        //upload(&hw.fb, &mut hw.display);
         hw.present_fb();
     }
 }

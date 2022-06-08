@@ -23,3 +23,5 @@ st7735-lcd = "0.8"
 
 [profile.release]
 lto = "fat"
+codegen-units = 1
+opt-level = "s"
