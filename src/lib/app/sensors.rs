@@ -5,8 +5,8 @@ use crate::lib::types::*;
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
-use lis3dh::accelerometer::vector::F32x3;
-use lis3dh::accelerometer::Accelerometer;
+use lis3dh::accelerometer::vector::I16x3;
+use lis3dh::accelerometer::RawAccelerometer;
 
 use embedded_graphics as eg;
 
@@ -27,14 +27,14 @@ pub fn main(hw: &mut HW) {
         let (x, y) = hw.joystick.read(&mut hw.adc1);
         writeln!(&mut console, "Joystick: {x} {y}").unwrap();
 
-        let F32x3 {
+        let I16x3 {
             x: gx,
             y: gy,
             z: gz,
-        } = hw.lis3dh.accel_norm().unwrap();
-        writeln!(&mut console, "gx {gx:+0.3}").unwrap();
-        writeln!(&mut console, "gy {gy:+0.3}").unwrap();
-        writeln!(&mut console, "gz {gz:+0.3}").unwrap();
+        } = hw.lis3dh.accel_raw().unwrap();
+        writeln!(&mut console, "gx {gx}").unwrap();
+        writeln!(&mut console, "gy {gy}").unwrap();
+        writeln!(&mut console, "gz {gz}").unwrap();
 
         let light_data: u16 = hw.adc1.read(&mut hw.light).unwrap();
         writeln!(&mut console, "light {}", light_data).unwrap();

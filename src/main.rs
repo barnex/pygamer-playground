@@ -15,7 +15,7 @@ fn main() -> ! {
     let mut hw = HW::new();
 
     let opts = [
-        "Kitty Cat", //
+        "Nom Nom Cat", //
         "Sensors",
     ];
 
