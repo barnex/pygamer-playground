@@ -24,7 +24,8 @@ fn main() -> ! {
 
         match selection {
             0 => app::nomnom::main(&mut sys),
-            1 => app::sensors::main(&mut sys.hw),
+            
+            1 => app::sensors::main(&mut sys),
             _ => (),
         }
     }

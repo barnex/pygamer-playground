@@ -12,8 +12,6 @@ use embedded_graphics as eg;
 
 use eg::draw_target::DrawTarget;
 use eg::image::Image;
-use eg::mono_font;
-use eg::mono_font::MonoTextStyle;
 use eg::pixelcolor::Rgb565;
 use eg::text::Text;
 
@@ -31,22 +29,22 @@ pub fn main(sys: &mut Sys) {
 
     let mut dbg = false;
 
-    sys.hw.fb.clear(Rgb565::WHITE).unwrap();
+    sys.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Hello...", Point::new(30, 60), text_style());
-    text.draw(&mut sys.hw.fb).unwrap();
-    sys.hw.present_fb();
+    text.draw(&mut sys.fb).unwrap();
+    sys.present_fb();
 
     sys.hw.wait_for_key();
 
-    sys.hw.fb.clear(Rgb565::WHITE).unwrap();
+    sys.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
-    text.draw(&mut sys.hw.fb).unwrap();
-    sys.hw.present_fb();
+    text.draw(&mut sys.fb).unwrap();
+    sys.present_fb();
 
     sys.hw.wait_for_key();
 
     loop {
-        sys.hw.fb.clear(Rgb565::WHITE).unwrap();
+        sys.fb.clear(Rgb565::WHITE).unwrap();
 
         for event in sys.hw.buttons.events() {
             match event {
@@ -91,12 +89,9 @@ pub fn main(sys: &mut Sys) {
         }
 
         let nomnom = Image::new(&raw_image, Point::new(pos.0 as i32, pos.1 as i32));
-        nomnom.draw(&mut sys.hw.fb).unwrap();
+        nomnom.draw(&mut sys.fb).unwrap();
 
-        sys.hw.present_fb();
+        sys.present_fb();
     }
 }
 
-fn text_style() -> MonoTextStyle<'static, Rgb565> {
-    MonoTextStyle::new(&mono_font::ascii::FONT_7X13_BOLD, Rgb565::BLUE)
-}

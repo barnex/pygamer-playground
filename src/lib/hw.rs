@@ -37,7 +37,6 @@ pub struct HW {
     pub lis3dh: AccMtr,
     pub adc1: Adc<pac::ADC1>,
     pub light: gpio::Pin<PB04, Alternate<B>>,
-    pub fb: FrameBuffer,
 }
 
 pub type AccMtr = Lis3dh<
@@ -95,8 +94,6 @@ impl HW {
         let adc1 = Adc::adc1(peripherals.ADC1, &mut peripherals.MCLK, &mut clocks, GCLK11);
         let light = pins.light_pin.into_function_b(&mut pins.port);
 
-        let fb = FrameBuffer::new();
-
         HW {
             delay,
             display,
@@ -105,20 +102,8 @@ impl HW {
             lis3dh,
             adc1,
             light,
-            fb,
         }
     }
-
-    // Copy the framebuffer to the display.
-    pub fn present_fb(&mut self) {
-        self.display
-            .set_address_window(0, 0, SCREEN_W as u16, SCREEN_H as u16)
-            .unwrap();
-        self.display
-            .write_pixels(self.fb.inner.iter().map(|c| c.into_storage()))
-            .unwrap();
-    }
-
 
     pub fn button_pressed(&mut self, button: Keys) -> bool {
         self.buttons.events().find(|b| *b == button).is_some()
@@ -133,14 +118,6 @@ impl HW {
                 }
             }
         }
-    }
-
-    pub fn show_msg(&mut self, msg: &str) {
-        self.fb.clear(Rgb565::WHITE).unwrap();
-        Text::new(msg, Point::new(0, LINE_H as i32 - 2), text_style())
-            .draw(&mut self.fb)
-            .unwrap();
-        self.present_fb();
     }
 }
 
