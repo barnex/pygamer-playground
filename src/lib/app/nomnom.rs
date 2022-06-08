@@ -20,8 +20,6 @@ use eg::text::Text;
 use tinybmp::Bmp;
 
 pub fn main(sys: &mut Sys) {
-    //let mut console = heapless::String::<256>::new();
-    //let mut frame = 0;
     let raw_image: Bmp<Rgb565> =
         Bmp::from_slice(include_bytes!("../../../assets/nomnom64.bmp")).unwrap();
 

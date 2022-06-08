@@ -1,7 +1,4 @@
 use crate::lib::types::*;
-use crate::LINE_H;
-
-use crate::lib::accellerometer::*;
 
 use pac::gclk::pchctrl::GEN_A::GCLK11;
 
@@ -20,6 +17,15 @@ use bsp::gpio::v2::PB04;
 use bsp::pins::JoystickReader;
 use bsp::{hal, pac, Pins};
 
+use bsp::gpio::v2::C;
+use bsp::gpio::v2::PA12;
+use bsp::gpio::v2::PA13;
+use bsp::sercom::v1::Pad;
+use bsp::sercom::v2::Pad0;
+use bsp::sercom::v2::Pad1;
+use bsp::sercom::I2CMaster2;
+use lis3dh::*;
+
 use lis3dh::Lis3dh;
 
 // Hardware state
@@ -33,6 +39,15 @@ pub struct HW {
     pub light: gpio::Pin<PB04, Alternate<B>>,
     pub fb: FrameBuffer,
 }
+
+pub type AccMtr = Lis3dh<
+    Lis3dhI2C<
+        I2CMaster2<
+            Pad<pac::SERCOM2, Pad0, gpio::Pin<PA12, Alternate<C>>>,
+            Pad<pac::SERCOM2, Pad1, gpio::Pin<PA13, Alternate<C>>>,
+        >,
+    >,
+>;
 
 impl HW {
     pub fn new() -> Self {
@@ -104,10 +119,6 @@ impl HW {
             .unwrap();
     }
 
-    pub fn joystick_read(&mut self) -> (i16, i16) {
-        let (x, y) = self.joystick.read(&mut self.adc1);
-        (x as i16 - 2048, y as i16 - 2048)
-    }
 
     pub fn button_pressed(&mut self, button: Keys) -> bool {
         self.buttons.events().find(|b| *b == button).is_some()
