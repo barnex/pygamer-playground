@@ -3,9 +3,6 @@ use crate::lib::types::*;
 #[cfg(not(feature = "panic_led"))]
 use panic_halt as _;
 
-
-use pygamer as bsp;
-
 use bsp::buttons::Keys;
 
 use lis3dh::accelerometer::vector::F32x3;
@@ -22,7 +19,7 @@ use eg::text::Text;
 
 use tinybmp::Bmp;
 
-pub fn main(hw: &mut HW) {
+pub fn main(sys: &mut Sys) {
     //let mut console = heapless::String::<256>::new();
     //let mut frame = 0;
     let raw_image: Bmp<Rgb565> =
@@ -36,24 +33,24 @@ pub fn main(hw: &mut HW) {
 
     let mut dbg = false;
 
-    hw.fb.clear(Rgb565::WHITE).unwrap();
+    sys.hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Hello...", Point::new(30, 60), text_style());
-    text.draw(&mut hw.fb).unwrap();
-    hw.present_fb();
+    text.draw(&mut sys.hw.fb).unwrap();
+    sys.hw.present_fb();
 
-    hw.wait_for_key();
+    sys.hw.wait_for_key();
 
-    hw.fb.clear(Rgb565::WHITE).unwrap();
+    sys.hw.fb.clear(Rgb565::WHITE).unwrap();
     let text = Text::new("Wanna play?", Point::new(30, 60), text_style());
-    text.draw(&mut hw.fb).unwrap();
-    hw.present_fb();
+    text.draw(&mut sys.hw.fb).unwrap();
+    sys.hw.present_fb();
 
-    hw.wait_for_key();
+    sys.hw.wait_for_key();
 
     loop {
-        hw.fb.clear(Rgb565::WHITE).unwrap();
+        sys.hw.fb.clear(Rgb565::WHITE).unwrap();
 
-        for event in hw.buttons.events() {
+        for event in sys.hw.buttons.events() {
             match event {
                 Keys::SelectDown => dbg = !dbg,
                 _ => (),
@@ -64,7 +61,7 @@ pub fn main(hw: &mut HW) {
             x: gx,
             y: gy,
             z: gz,
-        } = hw.lis3dh.accel_norm().unwrap();
+        } = sys.hw.lis3dh.accel_norm().unwrap();
 
         const ACC: f32 = 0.08;
         vel.0 += ACC * gx;
@@ -96,9 +93,9 @@ pub fn main(hw: &mut HW) {
         }
 
         let nomnom = Image::new(&raw_image, Point::new(pos.0 as i32, pos.1 as i32));
-        nomnom.draw(&mut hw.fb).unwrap();
+        nomnom.draw(&mut sys.hw.fb).unwrap();
 
-        hw.present_fb();
+        sys.hw.present_fb();
     }
 }
 

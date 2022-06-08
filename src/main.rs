@@ -23,7 +23,7 @@ fn main() -> ! {
         let selection = show_menu(&mut sys.hw, &opts);
 
         match selection {
-            0 => app::nomnom::main(&mut sys.hw),
+            0 => app::nomnom::main(&mut sys),
             1 => app::sensors::main(&mut sys.hw),
             _ => (),
         }
