@@ -41,7 +41,9 @@ impl Sys {
     }
 
     fn inv_text_style() -> mono_font::MonoTextStyle<'static, Rgb565> {
-        MonoTextStyle::new(&eg::mono_font::ascii::FONT_7X13_BOLD, Sys::BG)
+        let mut style = MonoTextStyle::new(&eg::mono_font::ascii::FONT_7X13_BOLD, Sys::BG);
+        style.background_color = Some(Sys::FG);
+        style
     }
 
     pub fn joystick_read(&mut self) -> (i16, i16) {
