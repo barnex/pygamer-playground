@@ -1,5 +1,5 @@
-# pygamer-playground
+# Embedded Rust on the Adafruit Pygamer.
 
-Experimenting with embedded Rust on the Adafruit Pygamer: read out sensors, render text and graphics.
+Experimenting with [embedded Rust](https://docs.rust-embedded.org/book/) on the Adafruit Pygamer: read out buttons and sensors, render text and graphics.
 
 ![fig](photo.jpg)
